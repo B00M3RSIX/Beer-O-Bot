@@ -1,0 +1,54 @@
+# VoiceCommand.msg
+# Message for voice command recognition and processing
+
+# Header with timestamp for when command was recognized
+std_msgs/Header header
+
+# Command information
+string command                # Raw text of the recognized command (in German)
+string command_translation    # English translation (for debugging)
+uint8 command_type            # Type classification of the command
+float32 confidence            # Recognition confidence (0.0-1.0)
+
+# Source information
+int32 direction_angle         # Direction of arrival in degrees (0-360, -1 if unknown)
+float32 source_distance       # Estimated distance to source in meters (-1 if unknown)
+geometry_msgs/Point source_position  # Estimated 3D position of sound source (if available)
+
+# Authorization information
+string issuer_id              # ID of the person who issued the command (if identified)
+string issuer_name            # Name of the person who issued the command (if known)
+bool requires_verification    # Whether this command requires identity verification
+bool is_authorized            # Whether the issuer is authorized for this command
+uint8 verification_status     # Status of the verification process
+
+# Command processing
+uint8 processing_status       # Current status of command processing
+string[] parameters           # Extracted parameters from the command
+time process_start_time       # When command processing began
+time verification_deadline    # Timeout for verification steps
+
+# Command type constants
+uint8 CMD_FOLLOW = 0          # Following-related commands
+uint8 CMD_NAVIGATION = 1      # Navigation-related commands
+uint8 CMD_SYSTEM = 2          # System control commands
+uint8 CMD_CONFIGURATION = 3   # Configuration commands
+uint8 CMD_QUERY = 4           # Information request commands
+uint8 CMD_REGISTRATION = 5    # Identity registration commands
+uint8 CMD_UNKNOWN = 255       # Unrecognized command type
+
+# Verification status constants
+uint8 VERIFY_PENDING = 0      # Verification not yet attempted
+uint8 VERIFY_IN_PROGRESS = 1  # Verification in progress
+uint8 VERIFY_SUCCEEDED = 2    # Verification succeeded
+uint8 VERIFY_FAILED = 3       # Verification failed
+uint8 VERIFY_TIMEOUT = 4      # Verification timed out
+
+# Processing status constants
+uint8 PROC_RECEIVED = 0       # Command received
+uint8 PROC_VERIFYING = 1      # Verifying command authorization
+uint8 PROC_EXECUTING = 2      # Command is being executed
+uint8 PROC_COMPLETED = 3      # Command was executed successfully
+uint8 PROC_FAILED = 4         # Command execution failed
+uint8 PROC_REJECTED = 5       # Command was rejected (unauthorized)
+uint8 PROC_CANCELLED = 6      # Command was cancelled

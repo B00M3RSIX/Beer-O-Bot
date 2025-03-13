@@ -1,0 +1,150 @@
+<!--
+Voice Command Processing Behavior Tree
+This behavior tree handles the complete voice command processing flow,
+including person identification, verification, and command execution.
+-->
+<root main_tree_to_execute="voice_command_processing">
+  <!-- Main Voice Command Processing Tree -->
+  <BehaviorTree ID="voice_command_processing">
+    <Sequence>
+      <!-- Get the latest voice command -->
+      <WaitForCommand timeout="1.0"/>
+
+      <!-- Command classification -->
+      <ClassifyCommand command="{command}" command_type="{command_type}" parameters="{parameters}"/>
+
+      <!-- Parallel processing: Command verification and timeout handling -->
+      <Fallback>
+        <ReactiveSequence>
+          <!-- Check if command requires verification -->
+          <CheckCommandVerification command_type="{command_type}" requires_verification="{requires_verification}"/>
+          
+          <!-- If no verification required, just execute the command -->
+          <Fallback>
+            <Sequence>
+              <IsFalse value="{requires_verification}"/>
+              <ExecuteCommand command_type="{command_type}" parameters="{parameters}"/>
+            </Sequence>
+            
+            <!-- If verification required, go through verification steps -->
+            <Sequence>
+              <!-- Get direction of arrival -->
+              <GetDirectionOfArrival angle="{direction_angle}"/>
+              
+              <!-- Find person in camera frame -->
+              <Fallback>
+                <!-- Try to find person in current frame -->
+                <FindPersonInFrame direction="{direction_angle}" found="{person_in_frame}" person_id="{issuer_id}"/>
+                
+                <!-- If not found, rotate toward voice source -->
+                <Sequence>
+                  <SetProcessingStatus status="PROC_VERIFYING"/>
+                  <RotateToDirection angle="{direction_angle}"/>
+                  <SpeakText text="Wer hat den Befehl gegeben?"/>
+                  <WaitForPersonDetection timeout="5.0" found="{person_in_frame}" person_id="{issuer_id}"/>
+                </Sequence>
+              </Fallback>
+              
+              <!-- Process person verification -->
+              <Sequence>
+                <!-- Check if person has a name -->
+                <CheckPersonHasName person_id="{issuer_id}" has_name="{has_name}" person_name="{issuer_name}"/>
+                
+                <Fallback>
+                  <!-- Person doesn't have a name - reject command -->
+                  <Sequence>
+                    <IsFalse value="{has_name}"/>
+                    <SpeakText text="Ich kenne dich nicht. Du musst zuerst registriert werden."/>
+                    <SetVerificationStatus status="VERIFY_FAILED"/>
+                    <SetProcessingStatus status="PROC_REJECTED"/>
+                    <SetIsAuthorized value="false"/>
+                  </Sequence>
+                  
+                  <!-- Person has a name - request gesture confirmation -->
+                  <Sequence>
+                    <SpeakText text="Bitte hebe deine Hand zur Bestätigung."/>
+                    <DetectHandRaiseGesture person_id="{issuer_id}" timeout="10.0" detected="{gesture_confirmed}"/>
+                    
+                    <Fallback>
+                      <!-- Gesture not confirmed - reject command -->
+                      <Sequence>
+                        <IsFalse value="{gesture_confirmed}"/>
+                        <SpeakText text="Keine Bestätigung erhalten. Befehl wird abgelehnt."/>
+                        <SetVerificationStatus status="VERIFY_FAILED"/>
+                        <SetProcessingStatus status="PROC_REJECTED"/>
+                        <SetIsAuthorized value="false"/>
+                      </Sequence>
+                      
+                      <!-- Gesture confirmed - verify authorization and execute command -->
+                      <Sequence>
+                        <CheckCommandAuthorization person_id="{issuer_id}" command_type="{command_type}" is_authorized="{is_authorized}"/>
+                        
+                        <Fallback>
+                          <!-- Not authorized - reject command -->
+                          <Sequence>
+                            <IsFalse value="{is_authorized}"/>
+                            <SpeakText text="Du bist nicht berechtigt, diesen Befehl auszuführen."/>
+                            <SetVerificationStatus status="VERIFY_FAILED"/>
+                            <SetProcessingStatus status="PROC_REJECTED"/>
+                          </Sequence>
+                          
+                          <!-- Authorized - execute command -->
+                          <Sequence>
+                            <SetVerificationStatus status="VERIFY_SUCCEEDED"/>
+                            <SpeakText text="Befehl bestätigt."/>
+                            <SetProcessingStatus status="PROC_EXECUTING"/>
+                            <ExecuteCommand command_type="{command_type}" parameters="{parameters}" person_id="{issuer_id}"/>
+                            <SetProcessingStatus status="PROC_COMPLETED"/>
+                          </Sequence>
+                        </Fallback>
+                      </Sequence>
+                    </Fallback>
+                  </Sequence>
+                </Fallback>
+              </Sequence>
+            </Sequence>
+          </Fallback>
+        </ReactiveSequence>
+        
+        <!-- Timeout handling -->
+        <Sequence>
+          <CheckVerificationTimeout timeout="30.0" timed_out="{verification_timed_out}"/>
+          <SpeakText text="Zeitüberschreitung bei der Befehlsverarbeitung."/>
+          <SetVerificationStatus status="VERIFY_TIMEOUT"/>
+          <SetProcessingStatus status="PROC_CANCELLED"/>
+        </Sequence>
+      </Fallback>
+    </Sequence>
+  </BehaviorTree>
+  
+  <!-- Follow Command Execution Tree -->
+  <BehaviorTree ID="follow_command_execution">
+    <Sequence>
+      <GetPersonById person_id="{issuer_id}" found="{person_found}"/>
+      
+      <Fallback>
+        <Sequence>
+          <IsFalse value="{person_found}"/>
+          <SpeakText text="Person nicht gefunden. Kann nicht folgen."/>
+          <SetProcessingStatus status="PROC_FAILED"/>
+        </Sequence>
+        
+        <Sequence>
+          <SpeakText text="Ich folge dir jetzt, {issuer_name}."/>
+          <CreateFollowCommand person_id="{issuer_id}" command="{follow_command}"/>
+          <PublishFollowCommand command="{follow_command}"/>
+          <SetPersonFollowingActive person_id="{issuer_id}" active="true"/>
+        </Sequence>
+      </Fallback>
+    </Sequence>
+  </BehaviorTree>
+  
+  <!-- Registration Command Execution Tree -->
+  <BehaviorTree ID="registration_command_execution">
+    <Sequence>
+      <GetNameParameter parameters="{parameters}" name="{new_name}"/>
+      <StorePersonName person_id="{issuer_id}" name="{new_name}"/>
+      <SpeakText text="Ich habe dich als {new_name} gespeichert."/>
+    </Sequence>
+  </BehaviorTree>
+</root>

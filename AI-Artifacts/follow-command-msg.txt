@@ -1,0 +1,40 @@
+# FollowCommand.msg
+# Custom message to configure person following behavior
+
+# Target selection
+string target_id                 # ID of the person to follow (empty = follow currently tracked)
+
+# Following parameters
+float32 desired_distance         # Desired following distance in meters
+float32 max_distance             # Maximum distance before increasing speed
+float32 min_distance             # Minimum distance before stopping/backing up
+
+# Positional preference
+uint8 position_mode              # How to position relative to person
+float32 position_angle           # Preferred angle in radians (0 = directly behind)
+
+# Speed limits
+float32 max_linear_speed         # Maximum linear speed (m/s)
+float32 max_angular_speed        # Maximum angular speed (rad/s)
+
+# Behavior configuration
+bool maintain_visibility         # Whether to prioritize keeping person in view
+                                 # (may override optimal path planning)
+bool avoid_obstacles             # Whether to prioritize obstacle avoidance
+                                 # (may temporarily lose person tracking)
+
+# Recovery behavior
+uint8 recovery_mode              # What to do when person is lost
+uint16 max_search_duration       # Maximum time to search before giving up (seconds)
+
+# Position mode constants
+uint8 POSITION_BEHIND = 0        # Follow directly behind the person
+uint8 POSITION_SIDE = 1          # Follow to the side of the person
+uint8 POSITION_ANGLE = 2         # Follow at specified angle
+uint8 POSITION_ADAPTIVE = 3      # Adaptively position based on environment
+
+# Recovery mode constants
+uint8 RECOVERY_STOP = 0          # Stop in place when target is lost
+uint8 RECOVERY_LAST_POSITION = 1 # Go to last known position
+uint8 RECOVERY_SEARCH = 2        # Actively search for the person
+uint8 RECOVERY_RETURN_HOME = 3   # Return to home position

@@ -1,0 +1,29 @@
+# PersonIdentity.msg
+# Message for managing person identities in the vector database
+
+# Identity information
+string id                      # Unique identifier
+string name                    # Optional human-readable name
+time first_seen               # When this person was first identified
+time last_seen                # When this person was last seen
+
+# Status information
+bool is_active                # Whether this identity is currently active
+uint32 total_detections       # Total number of times this person was detected
+float32 recognition_confidence # Overall confidence in this identity
+
+# Feature information
+uint16 feature_count          # Number of feature vectors stored for this identity
+float32[] feature_sample      # A representative feature vector (for visualization)
+
+# Appearance metadata
+uint8[] appearance_embedding  # Compressed appearance data (if available)
+string[] appearance_tags      # Tags describing appearance (e.g., "red_shirt", "hat")
+
+# Tracking history
+geometry_msgs/Pose last_position  # Last known position in map frame
+string[] locations_seen           # Named locations where person was detected
+
+# Optional user-defined metadata
+string[] metadata_keys         # Keys for additional metadata
+string[] metadata_values       # Values for additional metadata

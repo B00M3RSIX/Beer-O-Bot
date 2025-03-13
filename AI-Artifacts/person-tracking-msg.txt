@@ -1,0 +1,38 @@
+# PersonTrackingStatus.msg
+# Custom message for tracking person status and position in 3D space
+
+# Header with timestamp and frame information
+std_msgs/Header header
+
+# Target identification
+string target_id                  # Unique identifier for the tracked person
+float32 confidence                # Confidence score of the match (0.0-1.0)
+
+# 3D position in camera frame
+geometry_msgs/Point position      # 3D position (x,y,z) in meters
+geometry_msgs/Vector3 velocity    # Estimated velocity vector (meters/sec)
+
+# Bounding box in image coordinates
+int32 bbox_x                      # Top-left x position of bounding box (pixels)
+int32 bbox_y                      # Top-left y position of bounding box (pixels)
+int32 bbox_width                  # Width of bounding box (pixels)
+int32 bbox_height                 # Height of bounding box (pixels)
+
+# Current tracking status 
+uint8 tracking_status             # Current tracking state (see constants below)
+float32 time_since_last_detection # Time in seconds since last high-confidence detection
+
+# Distance from robot
+float32 distance                  # Distance from robot to person (meters)
+float32 angle                     # Angle to person in robot frame (radians)
+
+# Tracking status constants
+uint8 TRACKING_ACTIVE = 0         # Person is being actively tracked with high confidence
+uint8 TRACKING_TENTATIVE = 1      # Person is being tracked but with lower confidence
+uint8 TRACKING_OCCLUDED = 2       # Person is temporarily occluded but tracking continues
+uint8 TRACKING_LOST = 3           # Person is lost but system is still searching
+uint8 TRACKING_INACTIVE = 4       # Tracking has been stopped for this target
+
+# Optional metadata
+string[] active_features          # List of active feature types being used for tracking
+                                  # (e.g. "appearance", "motion", "position", "gait")

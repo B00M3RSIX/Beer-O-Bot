@@ -1,0 +1,49 @@
+# VectorDBQuery.srv
+# Service for querying the vector database
+
+# Request
+uint8 query_type             # Type of query
+string target_id             # Target ID to query (for specific queries)
+float32[] feature_vector     # Feature vector to search (for similarity search)
+float32 similarity_threshold # Minimum similarity threshold
+uint16 max_results           # Maximum number of results to return
+bool include_inactive        # Whether to include inactive identities
+string[] filter_tags         # Tags to filter results by
+---
+# Response
+bool success                  # Whether the query was successful
+string message                # Error or status message
+PersonIdentity[] results      # List of matching identities
+float32[] similarities        # Similarity scores for each result
+
+# Query type constants
+uint8 QUERY_BY_ID = 0         # Query by ID
+uint8 QUERY_BY_SIMILARITY = 1 # Query by feature vector similarity
+uint8 QUERY_BY_TAGS = 2       # Query by tags
+uint8 QUERY_RECENT = 3        # Query most recently seen
+uint8 QUERY_ALL = 4           # Query all identities
+
+# ==============================
+
+# VectorDBUpdate.srv
+# Service for updating the vector database
+
+# Request
+uint8 update_type             # Type of update
+string target_id              # Target ID to update
+float32[] feature_vector      # Feature vector to add (for add operations)
+PersonIdentity identity_data  # Identity data (for create/update operations)
+bool force_update             # Whether to force update existing data
+---
+# Response
+bool success                  # Whether the update was successful
+string message                # Error or status message
+string target_id              # ID of the affected identity
+
+# Update type constants
+uint8 CREATE_IDENTITY = 0     # Create a new identity
+uint8 ADD_FEATURE = 1         # Add a feature vector to existing identity
+uint8 UPDATE_METADATA = 2     # Update identity metadata
+uint8 DEACTIVATE = 3          # Deactivate an identity
+uint8 REACTIVATE = 4          # Reactivate an identity
+uint8 DELETE = 5              # Delete an identity
